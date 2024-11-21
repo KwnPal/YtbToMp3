@@ -12,7 +12,13 @@ path_audio = os.path.join(main_path,"Songs", "%(title)s.%(ext)s")
 path_video = os.path.join(main_path,"Videos", "%(title)s.%(ext)s")
 base_path = getattr(sys, '_MEIPASS', starting_path)
 
-ffmpeg_path = os.path.join(base_path, "ffmpeg", "ffmpeg.exe")
+
+if os.name == 'posix':
+    ffmpeg_path = os.path.join(base_path, "ffmpeg", "ffmpeg")
+else:
+    ffmpeg_path = os.path.join(base_path, "ffmpeg", "ffmpeg.exe")
+
+
 
 
 audio = {
