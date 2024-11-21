@@ -1,5 +1,5 @@
 # Python used 3.9.5
 customtkinter == 5.2.2
-PIL == 11.0.0
+pillow == 11.0.0
 yt_dlp == 2024.11.18 # this needs to be updated regularly
 requests == 2.32.2
