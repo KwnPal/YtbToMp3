@@ -3,7 +3,7 @@ from Youtube import ytb
 from concurrent.futures import ThreadPoolExecutor
 import os
 import webbrowser
-from PIL import Image, ImageTk
+from PIL import Image
 #https://www.youtube.com/watch?v=0CYfRc0wjiE&list=RD8nfhHBJQXOY&index=10
 executor = ThreadPoolExecutor()
 class gui:
@@ -108,7 +108,7 @@ class gui:
         ytb.change_option(1)
         self.video_button.configure(state = "disabled", fg_color="darkred", cursor="hand2")
         self.audio_button.configure(state = "enabled", fg_color="transparent", cursor="hand2")
-        
+
 
     def load_image(self):
         thumbnail = self.video.get_thumbnail()
