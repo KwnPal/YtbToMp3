@@ -88,6 +88,7 @@ class gui:
 
     def load_video(self):
         self.load_button.configure(state="disabled", text = "Loading...")
+        self.result_label.configure(text = "")
         url = self.entry.get()
         if url:
             self.video = ytb.extract_audio(url)
@@ -115,7 +116,6 @@ class gui:
         if prog["status"] == "finished" and ytb.option["name"] == "Songs":
             self.result_label.configure(text = video_counter+f"Converting to mp3...", font = ("Arial", 12 ,"bold"))
             self.counter += 1
-
 
     def download(self):
         self.load_button.configure(state = "disabled")

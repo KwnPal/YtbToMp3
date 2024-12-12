@@ -2,6 +2,7 @@ import yt_dlp
 import requests 
 from PIL import Image
 from io import BytesIO
+from yt_dlp.utils import DownloadError
 import sys
 import os
 
@@ -61,17 +62,20 @@ class ytb:
 
     @classmethod
     def extract_audio(cls, url):
+        test_url = f"https://www.google.com"
         with yt_dlp.YoutubeDL(cls.option) as ytdl:
             try:
+                requests.get(test_url)
                 info = ytdl.extract_info(url, download = False)
                 if info.get("is_live"):
                     return f"Can't download Livestream."
                 return cls(info)
+            except DownloadError as d:
+                return f"THIS URL IS WRONG"
+            except (requests.ConnectionError, requests.Timeout):
+                return f"INTERNET IS DOWN"
             except Exception as e:
-                if "URL" in str(e) or "HTTP" in str(e):
-                    return f"Not a valid URL"
-                else:
-                    return e
+                return e
     @classmethod
     def change_option(cls, ptr):
         cls.option = array[ptr]
