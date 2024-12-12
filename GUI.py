@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import tkinter as tk
 from Youtube import ytb
+from yt_dlp.utils import DownloadError
 from concurrent.futures import ThreadPoolExecutor
 import os
 import webbrowser
@@ -14,11 +15,13 @@ class gui:
         self.root.geometry("700x350")
         self.root.title("Yt_To_Mp3")
         self.root.minsize(700, 350)
+        self.counter = 1
         ctk.set_appearance_mode("dark")
         ctk.set_widget_scaling(1.5)  # Scale widgets by 1.5x
         ctk.set_window_scaling(1.5)  # Scale the window by 1.5x
 
         self.main_app()
+        self.context_menu()
     
     def main_app(self):
         # Option Mode
@@ -54,8 +57,13 @@ class gui:
         # Load Button
         self.load_button = ctk.CTkButton(self.load_download_frame, border_width=2, border_color="#0047A0", text="Load Video", fg_color="transparent", font=("Arial", 12, "bold"), cursor="hand2", command = lambda: executor.submit(self.load_video))
         self.load_button.pack(side="left", pady=10)
+
+        self.entry.bind("<Return>", lambda e: self.load_button.invoke())
+        # Bind right-click to show the context menu
+        self.entry.bind("<Button-3>", self.right_click)
+        
         # Download Button
-        self.download_button = ctk.CTkButton(self.load_download_frame, text="Download", font=("Arial", 12, "bold"), border_width=2, border_color="#0047A0", cursor="hand2", fg_color="transparent", height=30, width=90, command = lambda: executor.submit(self.download))
+        self.download_button = ctk.CTkButton(self.load_download_frame, text="Download", font=("Arial", 12, "bold"), border_width=2, border_color="#0047A0", cursor="hand2", fg_color="transparent", height=30, width=90, command =lambda: executor.submit(self.download))
         self.download_button.pack_forget()
         # Video Mode
         self.video_button = ctk.CTkButton(self.option_frame, border_width=2, border_color="#0047A0", fg_color="transparent", text="Video",font=("Arial", 12, "bold"), height=30, width=70, cursor="hand2", command = self.video_option)
@@ -63,6 +71,20 @@ class gui:
         # Audio Mode
         self.audio_button = ctk.CTkButton(self.option_frame,border_width=2, border_color="#0047A0", fg_color="darkred", text="Audio", font=("Arial", 12, "bold"), state="disabled", height=30, width=70, cursor="hand2", command= self.audio_option)
         self.audio_button.pack(side="left", padx=10, pady=10)
+
+    def context_menu(self):
+    # Create a context menu
+        self.menu = tk.Menu(self.root, tearoff=0, bg="#212121",fg="white", font=("Arial", 12, "bold"))
+        self.menu.add_command(label="Paste", command= self.paste_text)
+
+    def right_click(self,event):
+        self.menu.tk_popup(event.x_root, event.y_root)
+
+    def paste_text(self):
+        # Get clipboard content
+        clipboard = self.root.clipboard_get()
+        # Insert clipboard content at the current cursor position
+        self.entry.insert(0, clipboard)
 
     def load_video(self):
         self.load_button.configure(state="disabled", text = "Loading...")
@@ -80,12 +102,32 @@ class gui:
             self.result_label.configure(text = "WHERE IS THE URL", font = ("Arial", 12 ,"bold"))
             self.load_button.configure(state="normal",text = "Load Video")
     
+    def progress_hook_video(self, prog):
+        message = f"Downloading: {prog['_percent_str']}"
+        self.result_label.configure(text = message, font = ("Arial", 12 ,"bold"))
+        if prog["status"] == "finished" and ytb.option["name"] == "Songs":
+           self.result_label.configure(text = "Converting to mp3...", font = ("Arial", 15 ,"bold"))
+
+    def progress_hook_playlist(self, prog):
+        video_counter = f"{self.counter} of {self.video.num_songs}: "
+        message = video_counter+f"Downloading: {prog['_percent_str']}"
+        self.result_label.configure(text = message, font = ("Arial", 12 ,"bold"))
+        if prog["status"] == "finished" and ytb.option["name"] == "Songs":
+            self.result_label.configure(text = video_counter+f"Converting to mp3...", font = ("Arial", 12 ,"bold"))
+            self.counter += 1
+
+
     def download(self):
         self.load_button.configure(state = "disabled")
         self.download_button.configure(state = "disabled", text = "Downloading")
+        if self.video.type == "Video":
+            self.video.option["progress_hooks"] = [self.progress_hook_video]
+        else:
+            self.video.option["progress_hooks"] = [self.progress_hook_playlist]
+        self.counter=1
         self.video.download()
-        self.on_button_complete("Download Complete")
-            
+        self.on_button_complete(f"Successfully downloaded:\n[{self.video.title}]")
+
     def on_button_press(self):
         self.load_image()
         self.load_button.configure(state="normal", text = "Skip", command = lambda: self.on_button_complete(""), height=30, width=90)
@@ -98,7 +140,7 @@ class gui:
         self.download_button.pack_forget()
         self.entry.delete(0,"end")
         self.load_button.configure(text = "Load Video", state = "normal", command = lambda: executor.submit(self.load_video))
-        self.result_label.configure(text = message, font = ("Arial", 12 ,"bold"))
+        self.result_label.configure(text = message, font = ("Arial", 15 ,"bold"))
 
     def audio_option(self):
         ytb.change_option(0)
@@ -112,8 +154,8 @@ class gui:
 
     def load_image(self):
         thumbnail = self.video.get_thumbnail()
-        thumbnail = ctk.CTkImage(light_image = thumbnail, size=(200, 100))
         if thumbnail:
+            thumbnail = ctk.CTkImage(light_image = thumbnail, size=(200, 100))
             self.image.configure(image = thumbnail)
             self.image.place(relx=0.5, y=290, anchor="center") 
 

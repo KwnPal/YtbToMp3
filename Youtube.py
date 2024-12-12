@@ -1,8 +1,7 @@
 import yt_dlp 
 import requests 
 from PIL import Image
-from io import BytesIO 
-from yt_dlp import DownloadError
+from io import BytesIO
 import sys
 import os
 
@@ -18,14 +17,12 @@ if os.name == 'posix':
 else:
     ffmpeg_path = os.path.join(base_path, "ffmpeg", "ffmpeg.exe")
 
-
-
-
 audio = {
             "format": "mp3/bestaudio/best",
             "compat_opts": ["no-youtube-unavailable-videos"], # Skips the unavailable videos
             "noplaylist": True, # If a URL from a song in a playlist is used, skips the playlist
             "outtmpl":path_audio, # The desired path to save the video
+            "no_color":True,
             "ffmpeg_location": ffmpeg_path,
             "postprocessors": [
                 {  
@@ -40,6 +37,7 @@ video = {
     "compat_opts": ["no-youtube-unavailable-videos"],
     "noplaylist": True,
     "outtmpl": path_video,
+    "no_color":True,
     "ffmpeg_location": ffmpeg_path,
     "name":"Videos"
 }
@@ -55,9 +53,11 @@ class ytb:
         if "entries" in info:
             self.type = "Playlist"
             self.thumbnail = None
+            self.num_songs= len(info["entries"])
         else:
             self.type = "Video"
             self.thumbnail = info["thumbnail"]
+            self.num_songs=1
 
     @classmethod
     def extract_audio(cls, url):
@@ -83,8 +83,7 @@ class ytb:
             response.raise_for_status()  # Check for HTTP errors 
             image = Image.open(BytesIO(response.content)) 
             return image 
-        except Exception as e: 
-            print(f"Error loading image: {e}") 
+        except Exception: 
             return None 
 
     def download(self):
@@ -92,10 +91,8 @@ class ytb:
         self.folder_exists(path)
         with yt_dlp.YoutubeDL(self.option) as ytdl:
             ytdl.download([self.url])
-
+            
+            
     def folder_exists(self, path):
         if not os.path.exists(path):
             os.makedirs(path)
-            print(f"Base directory '{path}' was created.")
-        else:
-            print(f"Base directory '{path}' already exists.")
